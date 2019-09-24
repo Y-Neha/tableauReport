@@ -3,10 +3,12 @@
     <title>Patient Dashboard</title>
     <script type="text/javascript" 
     src="https://public.tableau.com/javascripts/api/tableau-2.2.2.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/6.6.1/firebase.js"></script>
     <script src="tableau.js"></script>
 </head>
 
 <body onload="initViz();">
+    <button id="getData" onclick="getUnderlyingData()" class="btn" >Get Data</button>
     <div id="vizContainer" style="width:800px; height:700px;"></div>
 </body>
 </html>
