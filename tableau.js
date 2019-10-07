@@ -12,7 +12,7 @@ const firebaseConfig = {
     storageBucket: "patient-dashboard-1e88a.appspot.com",
     messagingSenderId: "390406846479",
     appId: "1:390406846479:web:7ccbe898ec2175a8c18b7a"
-  };
+};
 
 function initViz() {
     var containerDiv = document.getElementById("vizContainer"),
@@ -24,10 +24,10 @@ function initViz() {
     viz = new tableau.Viz(containerDiv, url, options);
     console.log("Viz", viz)
     firebase.initializeApp(firebaseConfig);
-    console.log("firebase",firebase);
+    console.log("firebase", firebase);
     database = firebase.database();
     console.log("datababse", database);
-    setTimeout(refresh, 10000);
+    setTimeout(refresh, 5000);
 }
 
 function yearFilter(year) {
@@ -49,31 +49,9 @@ function yearFilter(year) {
 }
 
 function refresh() {
-    // var xhttp = new XMLHttpRequest();
-    // xhttp.open("GET", "https://patient-dashboard-1e88a.firebaseio.com/patient.json", true);
-    // xhttp.send();
-    // xhttp.addEventListener("readystatechange", processRequest, false);
-    // function processRequest(e) {
-    //     if (xhttp.readyState == 4 && xhttp.status == 200) {
-    //         var response = JSON.parse(xhttp.responseText);
-    //         console.log("Current value year", response.year);
-    //         console.log("Const value year", yearConst);
-    //         if (response.year !== yearConst) {
-    //             console.log("Year not equal");
-    //             yearConst = response.year;
-    //             if (response.year === "") {
-    //                 console.log("All year");
-    //                 yearFilter("");
-    //             } else {
-    //                 console.log("Individual year");
-    //                 yearFilter(response.year);
-    //             }
-    //         }
-    //     }
-    // }
-    // setTimeout(refresh, 5000);
 
-      database.ref('/patient').child('year').on('value', function(snapshot) {
+
+    database.ref('/patient').child('year').on('value', function (snapshot) {
         console.log("snapshot", snapshot);
         console.log("snapshot", snapshot.val());
         const year = snapshot.val();
@@ -84,29 +62,51 @@ function refresh() {
             console.log("Individual year");
             yearFilter(year);
         }
-      });
+        getUnderlyingData()
+    });
 }
 
 function getUnderlyingData() {
     console.log("getUnderlyingData");
     //  sheet = viz.getWorkbook().getActiveSheet().getWorksheets().get("P- Total Patients");
- 
-     if (sheet.getSheetType() === 'worksheet') {
+
+    if (sheet.getSheetType() === 'worksheet') {
         sheet.getUnderlyingDataAsync(options).then(function (t) {
-            Console.log("dataTarget", t.getData())
+            console.log("dataTarget", t.getData())
         });
-        
-    //if active sheet is a dashboard get data from a specified sheet
+
+        //if active sheet is a dashboard get data from a specified sheet
     } else {
         worksheetArray = viz.getWorkbook().getActiveSheet().getWorksheets();
+        var totalPatients, totalVisits;
         for (var i = 0; i < worksheetArray.length; i++) {
             worksheet = worksheetArray[i];
             sheetName = worksheet.getName();
             if (sheetName == "P- Total Visits") {
                 worksheetArray[i].getSummaryDataAsync(options).then(function (t) {
-                    Console.log("dataTarget", t.getData())
+                    console.log("P- Total Visits data", t.getData())
+                    console.log("dataTarget", t.getData()[0][1].formattedValue)
+                    totalVisits = t.getData()[0][1].value
+                    updateValues("totalVisits", totalVisits)
                 });
+                // } else if (sheetName == "P- Total Patients") {
+                //     worksheetArray[i].getSummaryDataAsync(options).then(function (t) {
+                //         console.log("P- Total Patients", t.getData())
+                //         console.log("dataTarget", t.getData()[0][1].value)
+                //         totalPatients = t.getData()[0][1].value
+                //     });
             }
+            // else if (sheetName == "P- Top 10 Cities having highest number of patients") {
+            //     worksheetArray[i].getSummaryDataAsync(options).then(function (t) {
+            //         console.log("P- Top 10 Cities having highest number of patients", t.getData())
+            //     });
+            // }
         }
     }
+}
+
+function updateValues(name, value) {
+    database.ref('/patient').update({
+        [name]: value,
+    });
 }
